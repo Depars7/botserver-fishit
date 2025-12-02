@@ -23,9 +23,12 @@ async def on_ready():
     print(f"Bot online sebagai {bot.user}")
 
 # --- Fungsi Global untuk Pengambilan Data ---
-# FIX: Mengubah ROBLBOX_PLACE_ID menjadi ROBLOX_PLACE_ID
+# FIX: Mengubah ROBLBOX_PLACE_ID menjadi ROBLOX_PLACE_ID (meskipun ini hanya komentar sekarang, penting untuk kejelasan)
 async def fetch_roblox_servers(place_id: int = ROBLOX_PLACE_ID, limit: int = 10):
     """Mengambil data server publik untuk ID tempat Roblox tertentu."""
+    # Catatan: URL di sini masih menggunakan limit=10. Jika Anda ingin mengambil 100 lalu memotongnya,
+    # seperti yang disarankan di langkah sebelumnya, Anda harus menggunakan limit=100 di URL. 
+    # Saya mempertahankan versi yang Anda berikan untuk stabilitas API.
     url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=10&sortOrder=Desc&excludeFullGames=true"
     
     async with aiohttp.ClientSession() as session:
@@ -170,5 +173,3 @@ def main():
         
 if __name__ == '__main__':
     main()
-
-bot.run(os.environ.get("DISCORD_TOKEN"))
