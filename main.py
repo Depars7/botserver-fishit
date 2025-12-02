@@ -6,6 +6,10 @@ import asyncio
 from flask import Flask
 from threading import Thread
 
+web_task = loop.run_in_executor(executor, start_web_server) # Menjalankan Flask di thread terpisah
+bot_task = loop.create_task(start_bot_async())              # Menjalankan Discord di event loop utama
+loop.run_until_complete(asyncio.gather(bot_task, web_task)) # Menjalankan keduanya secara paralel
+
 # --- Konfigurasi Bot dan Place ID ---
 ROBLOX_PLACE_ID = 121864768012064
 intents = discord.Intents.default()
@@ -18,7 +22,7 @@ async def on_ready():
 
 # --- Fungsi Global untuk Pengambilan Data ---
 async def fetch_roblox_servers(place_id: int = ROBLOX_PLACE_ID, limit: int = 10):
-    url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=100&sortOrder=Desc&excludeFullGames=true"
+    url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=10&sortOrder=Desc&excludeFullGames=true"
     
     async with aiohttp.ClientSession() as session:
         try:
