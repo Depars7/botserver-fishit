@@ -9,7 +9,7 @@
   "dependencies": {
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
-    "express": "^4.18.3",  <-- Diperlukan jika kamu menggunakan server.js
+    "express": "^4.18.3",
     "node-fetch": "^3.3.2"
   }
 }
