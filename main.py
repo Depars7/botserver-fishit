@@ -23,9 +23,9 @@ async def on_ready():
     print(f"Bot online sebagai {bot.user}")
 
 # --- Fungsi Global untuk Pengambilan Data ---
-async def fetch_roblox_servers(place_id: int = ROBLBOX_PLACE_ID, limit: int = 10):
+async def fetch_roblox_servers(place_id: int = ROBLOX_PLACE_ID, limit: int = 10):
     """Mengambil data server publik untuk ID tempat Roblox tertentu."""
-    url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=100&sortOrder=Desc&excludeFullGames=true"
+    url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=10&sortOrder=Desc&excludeFullGames=true"
     
     async with aiohttp.ClientSession() as session:
         try:
