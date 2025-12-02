@@ -1,8 +1,37 @@
+from flask import Flask
+from threading import Thread
 import discord
 from discord.ext import commands
 import aiohttp
 import os
 import asyncio # Diperlukan untuk penanganan asinkron yang lebih baik
+
+# Create a Flask app instance
+app = Flask(__name__)
+
+# Define a simple health check route
+@app.route('/')
+def home():
+    return "Bot is running!", 200
+
+# Function to run Flask in a separate thread
+def run_server():
+    # Use the port specified by the environment (often 8000 for Koyeb)
+    port = int(os.environ.get("PORT", 8000)) 
+    # Important: host='0.0.0.0' makes it accessible externally
+    app.run(host='0.0.0.0', port=port)
+
+class ServerPaginator(...):
+    # ... your existing class code ...
+
+# Before bot.run(...), start the web server in a background thread
+if __name__ == '__main__':
+    # 1. Start the Flask server in a non-blocking thread
+    t = Thread(target=run_server)
+    t.start()
+    
+    # 2. Start the Discord bot (main process)
+    bot.run(os.environ.get("DISCORD_TOKEN"))
 
 # Konfigurasi Intents
 intents = discord.Intents.default()
