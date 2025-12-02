@@ -4,6 +4,36 @@ from discord.ext import commands
 import aiohttp
 import os
 import asyncio
+from web import start_web_server
+from bot import start_bot
+import concurrent.futures
+
+def main():
+    """Mengatur dan menjalankan bot dan web server secara bersamaan."""
+    
+    # 1. Ambil event loop saat ini
+    loop = asyncio.get_event_loop()
+    
+    # 2. Siapkan thread pool executor untuk menjalankan web server (blocking operation)
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+    
+    # 3. Web server (Blocking) dijalankan di thread terpisah (executor)
+    web_task = loop.run_in_executor(executor, start_web_server)
+    
+    # 4. Bot Discord (Async) dijalankan di main event loop
+    bot_task = loop.create_task(start_bot())
+
+    # 5. Jalankan kedua tugas secara bersamaan
+    try:
+        loop.run_until_complete(asyncio.gather(bot_task, web_task))
+    except KeyboardInterrupt:
+        pass # Handle exit
+    finally:
+        # Hentikan semua tugas saat loop selesai
+        loop.run_until_executor()
+        
+if __name__ == '__main__':
+    main()
 
 # Place ID Roblox yang digunakan (Fish-it)
 ROBLOX_PLACE_ID = 121864768012064
