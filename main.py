@@ -1,46 +1,15 @@
-# bot.py
 import discord
 from discord.ext import commands
 import aiohttp
 import os
 import asyncio
-from web import start_web_server
-from bot import start_bot
-import concurrent.futures
+from flask import Flask
+from threading import Thread
 
-def main():
-    """Mengatur dan menjalankan bot dan web server secara bersamaan."""
-    
-    # 1. Ambil event loop saat ini
-    loop = asyncio.get_event_loop()
-    
-    # 2. Siapkan thread pool executor untuk menjalankan web server (blocking operation)
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-    
-    # 3. Web server (Blocking) dijalankan di thread terpisah (executor)
-    web_task = loop.run_in_executor(executor, start_web_server)
-    
-    # 4. Bot Discord (Async) dijalankan di main event loop
-    bot_task = loop.create_task(start_bot())
-
-    # 5. Jalankan kedua tugas secara bersamaan
-    try:
-        loop.run_until_complete(asyncio.gather(bot_task, web_task))
-    except KeyboardInterrupt:
-        pass # Handle exit
-    finally:
-        # Hentikan semua tugas saat loop selesai
-        loop.run_until_executor()
-        
-if __name__ == '__main__':
-    main()
-
-# Place ID Roblox yang digunakan (Fish-it)
+# --- Konfigurasi Bot dan Place ID ---
 ROBLOX_PLACE_ID = 121864768012064
-
 intents = discord.Intents.default()
 intents.message_content = True
-
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 @bot.event
@@ -49,35 +18,30 @@ async def on_ready():
 
 # --- Fungsi Global untuk Pengambilan Data ---
 async def fetch_roblox_servers(place_id: int = ROBLOX_PLACE_ID, limit: int = 10):
-    # ... (Kode fetch_roblox_servers yang sudah benar) ...
-    url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=10&sortOrder=Desc&excludeFullGames=true"
+    url = f"https://games.roblox.com/v1/games/{place_id}/servers/Public?limit=100&sortOrder=Desc&excludeFullGames=true"
     
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(url, timeout=10) as resp:
                 if resp.status != 200:
-                    print(f"Roblox API returned status code: {resp.status}")
                     return None
                 data = await resp.json()
                 return data.get("data", [])[:limit]
-        except aiohttp.ClientError as e:
-            print(f"Aiohttp network error: {e}")
+        except aiohttp.ClientError:
             return None
         except asyncio.TimeoutError:
-            print("Request to Roblox API timed out.")
             return None
-        except Exception as e:
-            print(f"An unexpected error occurred during fetch: {e}")
+        except Exception:
             return None
 
 # --- Kelas ServerPaginator (View) ---
 class ServerPaginator(discord.ui.View):
+    # ... (Semua metode __init__, get_embed, refresh_servers, prev, next, refresh ada di sini) ...
+    # Pastikan semua fungsi class ini **ter-indentasi** dengan benar
     def __init__(self, servers):
         super().__init__(timeout=600)
-        
         self.servers = servers
         self.page = 0
-        
         self.join_button = discord.ui.Button(
             label="🔗 Join",
             style=discord.ButtonStyle.link,
@@ -89,13 +53,9 @@ class ServerPaginator(discord.ui.View):
         return await fetch_roblox_servers(limit=len(self.servers))
 
     def get_embed(self):
-        # ... (Kode get_embed yang sudah benar) ...
+        # ... (detail kode get_embed) ...
         if not self.servers:
-            return discord.Embed(
-                title="⚠️ Data Server Tidak Tersedia",
-                description="Tidak ada data server yang valid saat ini.",
-                color=discord.Color.red()
-            )
+            return discord.Embed(title="⚠️ Data Server Tidak Tersedia", color=discord.Color.red())
 
         server = self.servers[self.page]
         server_id = server.get("id", "Unknown")
@@ -114,7 +74,6 @@ class ServerPaginator(discord.ui.View):
         embed.add_field(name="Players", value=f"**{playing}**/{maxPlayers}", inline=True)
         embed.add_field(name="Ping", value=f"{ping}", inline=True)
         embed.add_field(name="FPS", value=f"{fps}", inline=True)
-        
         embed.set_footer(text=f"Total: {len(self.servers)} server | Timeout: 10 menit")
 
         return embed
@@ -134,36 +93,43 @@ class ServerPaginator(discord.ui.View):
     @discord.ui.button(label="🔄 Refresh", style=discord.ButtonStyle.success, custom_id="refresh_button")
     async def refresh(self, interaction: discord.Interaction, button):
         await interaction.response.defer()
-        
         new_servers = await self.refresh_servers()
-        
         if not new_servers:
             return await interaction.followup.send("⚠️ Gagal refresh data.", ephemeral=True)
-
         self.servers = new_servers
         self.page = 0 
-
         await interaction.message.edit(embed=self.get_embed(), view=self)
-
 
 @bot.command()
 async def roblox(ctx):
     loading_message = await ctx.send("🔍 Mengambil data server...")
-
     servers = await fetch_roblox_servers(limit=10) 
-
     if not servers:
         return await loading_message.edit(content="❌ Tidak bisa mengambil data server Roblox atau tidak ada server ditemukan.")
-
     view = ServerPaginator(servers)
     await loading_message.edit(content=None, embed=view.get_embed(), view=view)
 
-# Fungsi utama untuk menjalankan bot
-async def start_bot():
-    """Jalankan bot menggunakan token dari environment variable."""
-    token = os.environ.get("DISCORD_TOKEN")
-    if not token:
-        raise ValueError("DISCORD_TOKEN environment variable not set.")
-    await bot.start(token)
+
+# --- HEALTH CHECK SERVER (Flask) ---
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    """Mengembalikan 200 OK untuk health check."""
+    return "Discord Bot is Running!", 200
+
+def run_server():
+    """Mulai server Flask di thread terpisah."""
+    port = int(os.environ.get("PORT", 8000)) 
+    print(f"Starting web server on port {port}")
+    # Penting: gunakan host='0.0.0.0' dan matikan debug
+    app.run(host='0.0.0.0', port=port, debug=False)
+
+
+# --- MAIN EXECUTION ---
+if __name__ == '__main__':
+    # 1. Mulai server Flask di thread terpisah
+    t = Thread(target=run_server)
+    t.start()
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
