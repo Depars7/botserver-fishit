@@ -100,8 +100,8 @@ class ServerPaginator(discord.ui.View):
         self.page = 0 
         await interaction.message.edit(embed=self.get_embed(), view=self)
 
-@bot.command(name="server")
-async def server(ctx):
+@bot.command()
+async def roblox(ctx):
     loading_message = await ctx.send("🔍 Mengambil data server...")
     servers = await fetch_roblox_servers(limit=10) 
     if not servers:
