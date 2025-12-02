@@ -1,14 +1,15 @@
 {
-  "name": "discord-bot",
+  "name": "botserver-fishit",
   "version": "1.0.0",
+  "description": "Discord bot for fetching Roblox server data.",
   "main": "index.js",
-  "dependencies": {
-    "discord.js": "^14.17.3",
-    "dotenv": "^16.6.1",
-    "express": "^4.19.2",
-    "node-fetch": "^2.6.7"
-  },
   "scripts": {
     "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",  <-- Diperlukan jika kamu menggunakan server.js
+    "node-fetch": "^3.3.2"
   }
 }
