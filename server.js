@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 8000; // Menggunakan variabel PORT dari Koyeb
+const port = process.env.PORT || 3000; // Menggunakan variabel PORT dari Koyeb
 
 app.get('/', (req, res) => {
   res.send('Bot Discord Fish-it is Running!');
